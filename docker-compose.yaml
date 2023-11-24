@@ -1,0 +1,85 @@
+version: "3.9"
+name: "fs_tic"
+
+services:
+
+  web:
+    container_name: "web"
+    build: "./web_dev"
+    ports:
+      - "8888:80"
+    mem_limit: 512m
+    
+
+  api_no_sql:
+    container_name: "api_without_sql"
+    build: "./api_without_sql/"
+    #image: node:18-lts
+    environment:
+      PORT_API_WITHOUT_SQL: $PORT_API_WITHOUT_SQL
+    env_file:
+      - ./.env
+    networks:
+      - backend2
+
+
+  api_sql:
+    container_name: "api_with_sql"
+    build: "./api_with_sql/"
+    ports:
+      - "3001:3000"
+    environment:
+      - API_MYSQL_HOST=db_mysql
+      - API_MYSQL_USER=$API_MYSQL_USER
+      - API_MYSQL_PASSWORD=$API_MYSQL_PASSWORD
+      - API_MYSQL_DATABASE=$API_MYSQL_DATABASE
+    networks:
+      - backend
+      - backend2
+
+  db_mysql:
+    container_name: "db_mysql"
+    build: "./db_mysql/"
+    #ports:
+    #  - "3307:3306"
+    #  - "33070:33060"
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE
+    networks:
+      - backend
+    volumes:
+      - db_backup:/var/lib/mysql
+      - ./volume_db:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512m
+        reservations:
+          cpus: '1'
+          memory: 256m
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+      
+
+networks:
+  backend:
+    driver: bridge
+  backend2:
+    driver: bridge
+
+volumes:
+  db_backup:
+
+
+
+#docker compose -f "docker-compose.yaml" up -d --build 

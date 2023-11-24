@@ -1,0 +1,23 @@
+FROM node:18-alpine as builder
+
+WORKDIR /app
+
+RUN npm install -g @angular/cli@latest
+
+COPY package*.json ./
+
+RUN npm i
+
+COPY . .
+
+CMD ["ng", "build"]
+
+FROM nginx:stable-alpine3.17-slim
+
+COPY --from=builder /app/dist/demo/* /usr/share/nginx/html/
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
+
